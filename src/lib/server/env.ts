@@ -31,7 +31,7 @@ function buildDefaults(env: NodeJS.ProcessEnv): EnvConfig {
   return {
     DATABASE_URL: env.DATABASE_URL ?? "",
     JWT_SECRET: env.JWT_SECRET ?? "build-time-placeholder",
-    APP_URL: env.APP_URL ?? "http://localhost:3000",
+    APP_URL: env.APP_URL ?? env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
     COOKIE_NAME: env.COOKIE_NAME ?? "agencyos_session",
     COOKIE_MAX_AGE: parseInt(env.COOKIE_MAX_AGE ?? "604800", 10),
     NODE_ENV: "production",
@@ -64,13 +64,13 @@ function validateEnv(): EnvConfig {
   if (!env.ADMIN_SECRET) errors.push({ key: "ADMIN_SECRET", reason: "Admin secret is required" });
   else if (env.ADMIN_SECRET.length < 16) errors.push({ key: "ADMIN_SECRET", reason: "Must be at least 16 characters" });
 
-  // ─── Production required ───────────────────────────────────────────────────
+  // ─── Production warnings (non-fatal — optional integrations) ─────────────
   if (isProd) {
-    if (!env.APP_URL) errors.push({ key: "APP_URL", reason: "Required in production for CORS and redirect URLs" });
-    if (env.APP_URL && !env.APP_URL.startsWith("https://")) errors.push({ key: "APP_URL", reason: "Must use HTTPS in production" });
-    if (!env.RESEND_API_KEY) errors.push({ key: "RESEND_API_KEY", reason: "Email service required in production" });
-    if (!env.STRIPE_SECRET_KEY) errors.push({ key: "STRIPE_SECRET_KEY", reason: "Billing service required in production" });
-    if (!env.STRIPE_WEBHOOK_SECRET) errors.push({ key: "STRIPE_WEBHOOK_SECRET", reason: "Webhook signature validation required in production" });
+    const appUrl = env.APP_URL ?? env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) console.warn("[AgencyOS] APP_URL not set — CORS and redirect URLs will use defaults");
+    if (!env.RESEND_API_KEY) console.warn("[AgencyOS] RESEND_API_KEY not set — emails will log to console only");
+    if (!env.STRIPE_SECRET_KEY) console.warn("[AgencyOS] STRIPE_SECRET_KEY not set — billing features disabled");
+    if (!env.STRIPE_WEBHOOK_SECRET) console.warn("[AgencyOS] STRIPE_WEBHOOK_SECRET not set — webhook validation disabled");
   }
 
   if (errors.length > 0) {
@@ -93,7 +93,7 @@ function validateEnv(): EnvConfig {
   return {
     DATABASE_URL: env.DATABASE_URL ?? "",
     JWT_SECRET: env.JWT_SECRET ?? "fallback-dev-secret-minimum-32-chars-long-here",
-    APP_URL: env.APP_URL ?? "http://localhost:3000",
+    APP_URL: env.APP_URL ?? env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
     COOKIE_NAME: env.COOKIE_NAME ?? "agencyos_session",
     COOKIE_MAX_AGE: parseInt(env.COOKIE_MAX_AGE ?? "604800", 10),
     NODE_ENV: nodeEnv,
