@@ -30,6 +30,7 @@ const PUBLIC_PATHS = new Set([
   "/api/health/db",
   "/api/health/queue",
   "/api/health/storage",
+  "/api/status",
 ]);
 
 function generateTraceId(): string {

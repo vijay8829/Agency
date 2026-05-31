@@ -6,6 +6,16 @@ export async function GET() {
   const provider = process.env.STORAGE_PROVIDER ?? "local";
 
   if (provider === "local") {
+    // In serverless environments (Netlify, Vercel) the filesystem is read-only — skip write probe
+    const isServerless = process.env.NETLIFY === "true" || process.env.VERCEL === "1";
+    if (isServerless) {
+      return NextResponse.json({
+        status: "ok",
+        provider: "local",
+        note: "Serverless environment — filesystem write probe skipped",
+        timestamp: new Date().toISOString(),
+      });
+    }
     try {
       const dir = process.env.LOCAL_UPLOAD_DIR ?? "./uploads";
       await fs.mkdir(dir, { recursive: true });
