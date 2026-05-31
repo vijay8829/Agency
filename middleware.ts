@@ -5,7 +5,7 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? "fallback-dev-secret-minimum-32-chars-long-here"
 );
 const COOKIE_NAME = process.env.COOKIE_NAME ?? "agencyos_session";
-const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
+const APP_URL = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const IS_PROD = process.env.NODE_ENV === "production";
 
 // Origins that may access API routes — never accept wildcard tunnel URLs
