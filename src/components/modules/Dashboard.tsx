@@ -1,22 +1,20 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bot, Send, Sparkles, Eye,
   ChevronRight, CheckCircle, Target, FileCheck,
-  AlertCircle, DollarSign, TrendingUp, Users
+  AlertCircle, DollarSign, TrendingUp, Users, Zap,
+  Activity, ArrowUpRight, Shield, Cpu
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { metrics, recentActivity, aiSuggestions, leads, clients } from "@/lib/data";
 import { clr } from "@/lib/ds";
 import { showToast } from "@/lib/toast";
+import { NeuralBackground } from "@/components/NeuralBackground";
 
-interface AIOutput {
-  summary: string;
-  actions: string[];
-  confidence: number;
-}
+interface AIOutput { summary: string; actions: string[]; confidence: number; }
 
 const aiResponses: Record<string, AIOutput> = {
   "follow up": {
@@ -77,24 +75,98 @@ function getAIOutput(prompt: string): AIOutput {
 }
 
 const activityIcons: Record<string, React.ReactNode> = {
-  bot:     <Bot style={{ width: 13, height: 13, color: "#a78bfa" }} />,
-  invoice: <DollarSign style={{ width: 13, height: 13, color: "#fbbf24" }} />,
-  report:  <TrendingUp style={{ width: 13, height: 13, color: "#2dd4bf" }} />,
-  lead:    <Users style={{ width: 13, height: 13, color: "#60a5fa" }} />,
-  content: <Sparkles style={{ width: 13, height: 13, color: "#f472b6" }} />,
+  bot:     <Bot style={{ width: 12, height: 12, color: "#00d4ff" }} />,
+  invoice: <DollarSign style={{ width: 12, height: 12, color: "#f5a623" }} />,
+  report:  <TrendingUp style={{ width: 12, height: 12, color: "#06ffd3" }} />,
+  lead:    <Users style={{ width: 12, height: 12, color: "#00ff9d" }} />,
+  content: <Sparkles style={{ width: 12, height: 12, color: "#a78bfa" }} />,
 };
 
+/* Animated counter hook */
+function useCounter(target: number, duration = 1200) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const step = target / (duration / 16);
+    const id = setInterval(() => {
+      start += step;
+      if (start >= target) { setValue(target); clearInterval(id); }
+      else setValue(Math.floor(start));
+    }, 16);
+    return () => clearInterval(id);
+  }, [target, duration]);
+  return value;
+}
+
+/* Metric card */
+function MetricCard({ label, value, suffix = "", change, changePositive = true, icon: Icon, color, delay = 0 }:
+  { label: string; value: number; suffix?: string; change?: string; changePositive?: boolean; icon: typeof Activity; color: string; delay?: number }) {
+  const count = useCounter(value, 1200);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4, ease: [0.16,1,0.3,1] }}
+      style={{
+        background: "var(--clr-card)",
+        border: "1px solid var(--clr-border)",
+        borderRadius: 14, padding: "16px 18px",
+        position: "relative", overflow: "hidden",
+        cursor: "default",
+        transition: "border-color 0.2s, box-shadow 0.2s, transform 0.18s, background 0.2s",
+      }}
+      whileHover={{
+        borderColor: `${color}40`,
+        boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 24px ${color}12`,
+        y: -2,
+      }}
+    >
+      {/* Ambient top glow */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60,
+        background: `radial-gradient(ellipse 80% 100% at 50% -20%, ${color}12 0%, transparent 70%)`,
+        pointerEvents: "none" }} />
+
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", position: "relative" }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--clr-text4)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: "var(--clr-text1)", letterSpacing: "-0.035em", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+            {suffix === "$" ? "$" : ""}{count.toLocaleString()}{suffix !== "$" ? suffix : ""}
+          </div>
+          {change && (
+            <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 4 }}>
+              <ArrowUpRight style={{ width: 10, height: 10, color: changePositive ? "#00ff9d" : "#ff3366", transform: changePositive ? "none" : "rotate(90deg)" }} />
+              <span style={{ fontSize: 10.5, fontWeight: 600, color: changePositive ? "#00ff9d" : "#ff3366" }}>{change}</span>
+            </div>
+          )}
+        </div>
+        <div style={{
+          width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+          background: `${color}14`, border: `1px solid ${color}25`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: `0 0 12px ${color}20`,
+        }}>
+          <Icon style={{ width: 15, height: 15, color }} />
+        </div>
+      </div>
+
+      {/* Bottom scan accent */}
+      <div style={{ position: "absolute", bottom: 0, left: "20%", right: "20%", height: 1,
+        background: `linear-gradient(90deg, transparent, ${color}40, transparent)` }} />
+    </motion.div>
+  );
+}
+
 export function Dashboard() {
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt]         = useState("");
   const [lastPrompt, setLastPrompt] = useState("");
-  const [aiOutput, setAiOutput] = useState<AIOutput | null>(null);
+  const [aiOutput, setAiOutput]     = useState<AIOutput | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [simMode, setSimMode] = useState(false);
-  const [greeting, setGreeting] = useState("Good morning");
+  const [simMode, setSimMode]       = useState(false);
+  const [greeting, setGreeting]     = useState("Good morning");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    const hour = new Date().getHours();
-    setGreeting(hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening");
+    const h = new Date().getHours();
+    setGreeting(h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening");
   }, []);
 
   const handleExecute = async () => {
@@ -102,7 +174,7 @@ export function Dashboard() {
     setLastPrompt(prompt);
     setIsProcessing(true);
     setAiOutput(null);
-    await new Promise(r => setTimeout(r, simMode ? 700 : 1000));
+    await new Promise(r => setTimeout(r, simMode ? 600 : 1000));
     setAiOutput(getAIOutput(prompt));
     setIsProcessing(false);
     setPrompt("");
@@ -113,88 +185,118 @@ export function Dashboard() {
     showToast("Actions queued — AI Employee is executing…", "success");
   };
 
-  const handleEditPrompt = () => {
-    setPrompt(lastPrompt);
-    setAiOutput(null);
-  };
-
-  const hotLeads = leads.filter(l => l.status === "hot").length;
+  const hotLeads     = leads.filter(l => l.status === "hot").length;
   const activeClients = clients.filter(c => c.status === "active").length;
 
-  return (
-    <div style={{ padding: "32px 36px", maxWidth: 1080, margin: "0 auto" }}>
+  const metricCards = [
+    { label: "Pipeline Value",    value: 55700, suffix: "$",  change: "+12% this week",  changePositive: true,  icon: TrendingUp, color: "#00d4ff", delay: 0.05 },
+    { label: "Unpaid Invoices",   value: 16300, suffix: "$",  change: "3 overdue",        changePositive: false, icon: DollarSign, color: "#f5a623", delay: 0.10 },
+    { label: "Active Automations",value: metrics.activeAutomations, suffix: "",  change: "14h saved/week",  changePositive: true,  icon: Zap,         color: "#06ffd3", delay: 0.15 },
+    { label: "Client Tasks",      value: metrics.clientTasks, suffix: "",  change: `${hotLeads} hot leads`, changePositive: true, icon: Activity,    color: "#8b5cf6", delay: 0.20 },
+  ];
 
-      {/* Greeting */}
+  return (
+    <div style={{ padding: "28px 32px", maxWidth: 1080, margin: "0 auto" }}>
+
+      {/* ── Greeting bar ─────────────────────────────────── */}
       <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        style={{ marginBottom: 28 }}
+        style={{ marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}
       >
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: clr.text1, letterSpacing: "-0.025em", marginBottom: 4 }}>
-          {greeting}, Vijay
-        </h2>
-        <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-          <p style={{ fontSize: 13, color: clr.text4 }}>
+        <div>
+          <h2 style={{ fontSize: 19, fontWeight: 700, color: "var(--clr-text1)", letterSpacing: "-0.025em", marginBottom: 4 }}>
+            {greeting}, <span style={{ background: "linear-gradient(90deg,#00d4ff,#06ffd3)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Vijay</span>
+          </h2>
+          <p style={{ fontSize: 12.5, color: "var(--clr-text4)" }}>
             {metrics.activeAutomations} automations running · {hotLeads} hot leads · {activeClients} active clients
           </p>
-          {/* Compact stat pills */}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {[
-              { label: "Pipeline",   value: "$55.7k", color: "#60a5fa"  },
-              { label: "Unpaid",     value: "$16.3k", color: "#fbbf24"  },
-              { label: "Tasks",      value: String(metrics.clientTasks), color: "#a78bfa" },
-              { label: "Follow-ups", value: String(metrics.pendingFollowUps), color: "#fb923c" },
-            ].map(s => (
-              <span
-                key={s.label}
-                style={{ fontSize: 11, fontWeight: 600, color: s.color, background: `${s.color}12`, border: `1px solid ${s.color}22`, borderRadius: 20, padding: "3px 10px" }}
-              >
-                {s.value} {s.label}
-              </span>
-            ))}
-          </div>
-          <div
-            style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, color: clr.success, background: "rgba(52,211,153,0.07)", border: "1px solid rgba(52,211,153,0.15)", borderRadius: 20, padding: "4px 12px" }}
-          >
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: clr.success }} />
+        </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {[
+            { label: "$55.7k Pipeline", color: "#00d4ff" },
+            { label: "$16.3k Unpaid",   color: "#f5a623" },
+            { label: `${metrics.pendingFollowUps} Follow-ups`, color: "#8b5cf6" },
+          ].map(s => (
+            <span key={s.label} style={{
+              fontSize: 11, fontWeight: 600, color: s.color,
+              background: `${s.color}10`, border: `1px solid ${s.color}22`,
+              borderRadius: 20, padding: "3px 10px",
+              boxShadow: `0 0 8px ${s.color}10`,
+            }}>{s.label}</span>
+          ))}
+          <span style={{
+            display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600,
+            color: "#00ff9d", background: "rgba(0,255,157,0.07)", border: "1px solid rgba(0,255,157,0.18)",
+            borderRadius: 20, padding: "3px 12px",
+          }}>
+            <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#00ff9d", display: "inline-block", animation: "pulse-dot 1.8s ease-in-out infinite" }} />
             AI Online
-          </div>
+          </span>
         </div>
       </motion.div>
 
-      {/* ── AI Command Center — HERO ────────────────────────── */}
+      {/* ── Metric cards ─────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}
+        className="grid-cols-4">
+        {metricCards.map(m => <MetricCard key={m.label} {...m} />)}
+      </div>
+
+      {/* ── AI Command Center — HERO ──────────────────────── */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.4 }}
+        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.12, duration: 0.4 }}
         style={{
-          background: "rgba(124,58,237,0.035)",
-          border: "1px solid rgba(124,58,237,0.2)",
-          borderRadius: 18,
-          padding: "28px 28px 22px",
-          marginBottom: 24,
-          position: "relative",
-          overflow: "hidden",
+          borderRadius: 20, padding: "26px 26px 20px",
+          marginBottom: 22,
+          position: "relative", overflow: "hidden",
+          background: "rgba(0,212,255,0.03)",
+          border: "1px solid rgba(0,212,255,0.16)",
+          boxShadow: "0 0 40px rgba(0,212,255,0.04), inset 0 1px 0 rgba(0,212,255,0.06)",
         }}
       >
-        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "radial-gradient(ellipse at top left, rgba(124,58,237,0.08) 0%, transparent 55%)" }} />
+        {/* Neural canvas background */}
+        <NeuralBackground />
 
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, position: "relative" }}>
-          <div style={{ width: 38, height: 38, borderRadius: 12, background: "linear-gradient(135deg,#7c3aed,#4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 24px rgba(124,58,237,0.35)", flexShrink: 0 }}>
-            <Bot style={{ width: 18, height: 18, color: "white" }} />
+        {/* Radial glow top-left */}
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none",
+          background: "radial-gradient(ellipse 60% 50% at 0% 0%, rgba(0,212,255,0.07) 0%, transparent 60%)" }} />
+
+        {/* Header row */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18, position: "relative" }}>
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 13,
+              background: "linear-gradient(135deg,#00d4ff 0%,#8b5cf6 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 0 24px rgba(0,212,255,0.4), 0 0 60px rgba(0,212,255,0.15)",
+            }}>
+              <Bot style={{ width: 19, height: 19, color: "white" }} />
+            </div>
+            {/* Orbital ring */}
+            <div style={{
+              position: "absolute", inset: -5, borderRadius: "50%",
+              border: "1px dashed rgba(0,212,255,0.25)",
+              animation: "spin-slow 8s linear infinite",
+            }} />
           </div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: clr.text1, letterSpacing: "-0.02em" }}>AI Command Center</div>
-            <div style={{ fontSize: 12, color: clr.text4, marginTop: 2 }}>Tell your AI employee what to do — it plans, drafts, and executes</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--clr-text1)", letterSpacing: "-0.02em" }}>
+              AI Command Center
+            </div>
+            <div style={{ fontSize: 11.5, color: "var(--clr-text4)", marginTop: 2 }}>
+              Tell your AI employee what to do — it plans, drafts, and executes
+            </div>
           </div>
           <button
             onClick={() => setSimMode(!simMode)}
             style={{
-              marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 8, cursor: "pointer", transition: "all 0.15s", flexShrink: 0,
-              background: simMode ? "rgba(251,191,36,0.1)" : "rgba(255,255,255,0.04)",
-              border: `1px solid ${simMode ? "rgba(251,191,36,0.25)" : "rgba(255,255,255,0.08)"}`,
-              color: simMode ? "#fbbf24" : clr.text4,
+              display: "flex", alignItems: "center", gap: 6,
+              fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 9,
+              cursor: "pointer", transition: "all 0.15s", flexShrink: 0,
+              background: simMode ? "rgba(245,166,35,0.10)" : "rgba(0,212,255,0.05)",
+              border: `1px solid ${simMode ? "rgba(245,166,35,0.28)" : "rgba(0,212,255,0.14)"}`,
+              color: simMode ? "#f5a623" : "var(--clr-text4)",
             }}
           >
             <Eye style={{ width: 12, height: 12 }} />
@@ -202,94 +304,162 @@ export function Dashboard() {
           </button>
         </div>
 
+        {/* Textarea */}
         <textarea
+          ref={textareaRef}
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleExecute(); } }}
           placeholder={simMode
-            ? "Preview what AI will do... e.g. 'Follow up with all warm leads'"
-            : "Tell me what to do... e.g. 'Send invoice reminders' or 'Generate weekly report'"}
+            ? "Preview what AI will do… e.g. 'Follow up with all warm leads'"
+            : "Tell me what to do… e.g. 'Send invoice reminders' or 'Generate weekly report'"}
           rows={3}
           style={{
-            width: "100%", fontSize: 14, color: clr.text1, resize: "none", outline: "none", fontFamily: "inherit", fontWeight: 500, lineHeight: 1.6,
-            background: "var(--clr-input-bg)", border: "1px solid var(--clr-input-border)", borderRadius: 12, padding: "14px 16px",
-            transition: "border-color 0.15s, background 0.15s", boxSizing: "border-box", position: "relative",
+            width: "100%", fontSize: 13.5, color: "var(--clr-text1)",
+            resize: "none", outline: "none", fontFamily: "inherit",
+            fontWeight: 450, lineHeight: 1.65,
+            background: "rgba(0,212,255,0.03)",
+            border: "1px solid rgba(0,212,255,0.12)",
+            borderRadius: 13, padding: "13px 15px",
+            transition: "border-color 0.2s, box-shadow 0.2s",
+            boxSizing: "border-box", position: "relative",
           }}
-          onFocus={e => { e.target.style.borderColor = "rgba(124,58,237,0.45)"; e.target.style.background = "var(--clr-input-bg)"; }}
-          onBlur={e => { e.target.style.borderColor = "var(--clr-input-border)"; e.target.style.background = "var(--clr-input-bg)"; }}
+          onFocus={e => {
+            e.target.style.borderColor = "rgba(0,212,255,0.38)";
+            e.target.style.boxShadow = "0 0 0 3px rgba(0,212,255,0.07), 0 0 20px rgba(0,212,255,0.08)";
+          }}
+          onBlur={e => {
+            e.target.style.borderColor = "rgba(0,212,255,0.12)";
+            e.target.style.boxShadow = "none";
+          }}
         />
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 12, position: "relative" }}>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {/* Action row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10, position: "relative" }}>
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
             {aiSuggestions.slice(0, 3).map((s, i) => (
-              <button
-                key={i}
-                onClick={() => setPrompt(s)}
-                style={{ fontSize: 11, color: clr.text4, background: "var(--clr-card)", border: "1px solid var(--clr-border)", borderRadius: 20, padding: "4px 12px", cursor: "pointer", transition: "all 0.15s", fontFamily: "inherit" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(124,58,237,0.1)"; e.currentTarget.style.borderColor = "rgba(124,58,237,0.28)"; e.currentTarget.style.color = "#c4b5fd"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "var(--clr-card)"; e.currentTarget.style.borderColor = "var(--clr-border)"; e.currentTarget.style.color = clr.text4; }}
-              >
-                {s}
-              </button>
+              <button key={i} onClick={() => { setPrompt(s); textareaRef.current?.focus(); }}
+                style={{
+                  fontSize: 11, color: "var(--clr-text4)",
+                  background: "rgba(0,212,255,0.04)", border: "1px solid rgba(0,212,255,0.10)",
+                  borderRadius: 20, padding: "4px 11px", cursor: "pointer",
+                  transition: "all 0.14s", fontFamily: "inherit",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "rgba(0,212,255,0.10)";
+                  e.currentTarget.style.borderColor = "rgba(0,212,255,0.28)";
+                  e.currentTarget.style.color = "#00d4ff";
+                  e.currentTarget.style.boxShadow = "0 0 8px rgba(0,212,255,0.10)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "rgba(0,212,255,0.04)";
+                  e.currentTarget.style.borderColor = "rgba(0,212,255,0.10)";
+                  e.currentTarget.style.color = "var(--clr-text4)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >{s}</button>
             ))}
           </div>
-          <Button
-            variant="primary"
-            size="sm"
-            loading={isProcessing}
+          <button
             onClick={handleExecute}
-            icon={simMode ? <Eye style={{ width: 13, height: 13 }} /> : <Send style={{ width: 13, height: 13 }} />}
+            disabled={isProcessing || !prompt.trim()}
+            style={{
+              display: "flex", alignItems: "center", gap: 7, padding: "8px 18px",
+              borderRadius: 10, fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+              background: isProcessing ? "rgba(0,212,255,0.10)" : "linear-gradient(135deg, #00d4ff, #06b6d4)",
+              border: "1px solid rgba(0,212,255,0.35)",
+              color: isProcessing ? "#00d4ff" : "#020510",
+              boxShadow: isProcessing ? "none" : "0 4px 16px rgba(0,212,255,0.25), 0 0 32px rgba(0,212,255,0.10)",
+              transition: "all 0.18s",
+              opacity: !prompt.trim() ? 0.5 : 1,
+            }}
+            onMouseEnter={e => {
+              if (!isProcessing && prompt.trim()) {
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 6px 24px rgba(0,212,255,0.35), 0 0 48px rgba(0,212,255,0.15)";
+                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
+              }
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 16px rgba(0,212,255,0.25), 0 0 32px rgba(0,212,255,0.10)";
+              (e.currentTarget as HTMLButtonElement).style.transform = "none";
+            }}
           >
-            {simMode ? "Preview" : "Execute"}
-          </Button>
+            {isProcessing ? (
+              <><Cpu style={{ width: 12, height: 12, animation: "spin 0.7s linear infinite" }} />Processing…</>
+            ) : (
+              <>{simMode ? <Eye style={{ width: 12, height: 12 }} /> : <Send style={{ width: 12, height: 12 }} />}{simMode ? "Preview" : "Execute"}</>
+            )}
+          </button>
         </div>
 
+        {/* AI output panel */}
         <AnimatePresence>
           {aiOutput && (
             <motion.div
               initial={{ opacity: 0, y: 8, height: 0 }}
               animate={{ opacity: 1, y: 0, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              style={{ marginTop: 16, overflow: "hidden" }}
+              style={{ marginTop: 14, overflow: "hidden" }}
             >
-              <div style={{ background: "var(--clr-card)", border: "1px solid rgba(124,58,237,0.22)", borderRadius: 12, padding: "16px 18px" }}>
+              <div style={{
+                background: "rgba(0,212,255,0.03)",
+                border: "1px solid rgba(0,212,255,0.18)",
+                borderRadius: 14, padding: "16px 18px",
+                position: "relative", overflow: "hidden",
+              }}>
+                {/* Scan line */}
+                <div className="scan-line" />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: 6, background: "rgba(124,58,237,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Bot style={{ width: 11, height: 11, color: "#a78bfa" }} />
+                    <div style={{ width: 22, height: 22, borderRadius: 7,
+                      background: "rgba(0,212,255,0.14)", border: "1px solid rgba(0,212,255,0.25)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      boxShadow: "0 0 8px rgba(0,212,255,0.20)" }}>
+                      <Bot style={{ width: 11, height: 11, color: "#00d4ff" }} />
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa" }}>
-                      {simMode ? "Simulation Preview" : "AI Employee Response"}
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "#00d4ff", letterSpacing: "0.02em" }}>
+                      {simMode ? "SIMULATION PREVIEW" : "AI EMPLOYEE RESPONSE"}
                     </span>
                     {simMode && <Badge variant="warning">Preview</Badge>}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: clr.text4 }}>
-                    <Target style={{ width: 11, height: 11 }} />
-                    {aiOutput.confidence}% confidence
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10.5, color: "var(--clr-text4)" }}>
+                    <Shield style={{ width: 10, height: 10, color: "#00ff9d" }} />
+                    <span style={{ color: "#00ff9d", fontWeight: 600 }}>{aiOutput.confidence}%</span>
+                    <span>confidence</span>
                   </div>
                 </div>
-                <p style={{ fontSize: 13, color: clr.text2, fontWeight: 500, marginBottom: 12, lineHeight: 1.6 }}>{aiOutput.summary}</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <p style={{ fontSize: 13, color: "var(--clr-text2)", fontWeight: 500, marginBottom: 12, lineHeight: 1.6 }}>{aiOutput.summary}</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                   {aiOutput.actions.map((action, i) => (
                     <motion.div
                       key={i}
-                      initial={{ opacity: 0, x: -6 }}
+                      initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.06 }}
-                      style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12, color: clr.text3, lineHeight: 1.6 }}
+                      transition={{ delay: i * 0.07 }}
+                      style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12, color: "var(--clr-text3)", lineHeight: 1.6 }}
                     >
-                      <ChevronRight style={{ width: 12, height: 12, color: "#7c3aed", flexShrink: 0, marginTop: 2 }} />
+                      <ChevronRight style={{ width: 11, height: 11, color: "#00d4ff", flexShrink: 0, marginTop: 2 }} />
                       {action}
                     </motion.div>
                   ))}
                 </div>
                 {!simMode && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--clr-border)" }}>
-                    <Button variant="primary" size="sm" icon={<CheckCircle style={{ width: 13, height: 13 }} />} onClick={handleConfirm}>Confirm & Execute</Button>
-                    <Button variant="ghost" size="sm" onClick={handleEditPrompt}>Edit</Button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(0,212,255,0.08)" }}>
+                    <button
+                      onClick={handleConfirm}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 6, padding: "7px 14px",
+                        borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                        background: "linear-gradient(135deg,#00d4ff,#06b6d4)",
+                        border: "1px solid rgba(0,212,255,0.4)", color: "#020510",
+                        boxShadow: "0 2px 12px rgba(0,212,255,0.22)",
+                      }}>
+                      <CheckCircle style={{ width: 12, height: 12 }} />Confirm & Execute
+                    </button>
+                    <Button variant="ghost" size="sm" onClick={() => { setPrompt(lastPrompt); setAiOutput(null); }}>Edit</Button>
                     <Button variant="ghost" size="sm" onClick={() => setAiOutput(null)}>Cancel</Button>
-                    <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: clr.text4 }}>
-                      <FileCheck style={{ width: 11, height: 11 }} />
+                    <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "var(--clr-text4)" }}>
+                      <FileCheck style={{ width: 10, height: 10 }} />
                       Audit logged
                     </div>
                   </div>
@@ -303,33 +473,50 @@ export function Dashboard() {
       {/* ── Two-column lower section ──────────────────────── */}
       <div className="two-col-grid">
 
-        {/* Live AI Activity */}
+        {/* Live Activity feed */}
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22, duration: 0.4 }}
+          style={{
+            background: "var(--clr-card)", border: "1px solid var(--clr-border)",
+            borderRadius: 16, padding: "18px 18px", overflow: "hidden",
+          }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: clr.text2, letterSpacing: "0.06em", textTransform: "uppercase" }}>Live Activity</span>
-            <Badge variant="purple" dot pulse>Live</Badge>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--clr-text4)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Live Activity</span>
+            <span style={{
+              display: "flex", alignItems: "center", gap: 5, fontSize: 10, fontWeight: 700,
+              color: "#00d4ff", background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.18)",
+              borderRadius: 5, padding: "2px 7px",
+            }}>
+              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#00d4ff", display: "inline-block", animation: "pulse-dot 1.5s ease-in-out infinite" }} />
+              LIVE
+            </span>
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {recentActivity.map((a, i) => (
               <motion.div
                 key={a.id}
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.25 + i * 0.06 }}
-                style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 10px", borderRadius: 10, cursor: "pointer", transition: "background 0.12s", borderBottom: i < recentActivity.length - 1 ? "1px solid var(--clr-border)" : "none" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "var(--clr-card)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
+                initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.27 + i * 0.055 }}
+                style={{
+                  display: "flex", alignItems: "flex-start", gap: 10,
+                  padding: "9px 8px", borderRadius: 9, cursor: "pointer",
+                  transition: "background 0.12s",
+                  borderBottom: i < recentActivity.length - 1 ? "1px solid var(--clr-border)" : "none",
+                }}
+                whileHover={{ backgroundColor: "var(--clr-card-hover)" }}
               >
-                <div style={{ width: 24, height: 24, borderRadius: 8, background: "var(--clr-card-hover)", border: "1px solid var(--clr-border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-                  {activityIcons[a.icon]}
+                <div style={{
+                  width: 26, height: 26, borderRadius: 8, flexShrink: 0, marginTop: 1,
+                  background: "var(--clr-card-hover)", border: "1px solid var(--clr-border)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {activityIcons[a.icon] ?? activityIcons.bot}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 12, color: clr.text2, lineHeight: 1.5 }}>{a.message}</p>
-                  <p style={{ fontSize: 10, color: clr.text4, marginTop: 2 }}>{a.time}</p>
+                  <p style={{ fontSize: 12, color: "var(--clr-text2)", lineHeight: 1.5 }}>{a.message}</p>
+                  <p style={{ fontSize: 10, color: "var(--clr-text4)", marginTop: 2 }}>{a.time}</p>
                 </div>
               </motion.div>
             ))}
@@ -338,50 +525,67 @@ export function Dashboard() {
 
         {/* Needs Attention */}
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.24, duration: 0.4 }}
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.26, duration: 0.4 }}
+          style={{
+            background: "var(--clr-card)", border: "1px solid var(--clr-border)",
+            borderRadius: 16, padding: "18px 18px",
+          }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: clr.text2, letterSpacing: "0.06em", textTransform: "uppercase" }}>Needs Attention</span>
-            <Badge variant="warning">4 items</Badge>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--clr-text4)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Needs Attention</span>
+            <span style={{
+              fontSize: 10, fontWeight: 700, color: "#ff3366",
+              background: "rgba(255,51,102,0.09)", border: "1px solid rgba(255,51,102,0.22)",
+              borderRadius: 5, padding: "2px 7px",
+            }}>4 items</span>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {[
-              { label: "Meridian Group",          detail: "Client health 45% — project at risk",      type: "danger"  as const, action: "Recover" },
-              { label: "Apex Digital invoice",    detail: "Overdue 12 days — $4,500 unpaid",           type: "warning" as const, action: "Remind"  },
-              { label: "Alex Thompson follow-up", detail: "Hot lead — no response in 30 minutes",      type: "warning" as const, action: "Follow up" },
-              { label: "Weekly reports",          detail: "3 clients haven't received status updates", type: "default" as const, action: "Generate" },
+              { label: "Meridian Group",          detail: "Client health 45% — project at risk",        type: "danger",  action: "Recover",    color: "#ff3366" },
+              { label: "Apex Digital invoice",    detail: "Overdue 12 days — $4,500 unpaid",             type: "warning", action: "Remind",     color: "#f5a623" },
+              { label: "Alex Thompson follow-up", detail: "Hot lead — no response in 30 minutes",        type: "warning", action: "Follow up",  color: "#f5a623" },
+              { label: "Weekly reports",          detail: "3 clients haven't received status updates",   type: "default", action: "Generate",   color: "var(--clr-text4)" },
             ].map((item, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.28 + i * 0.06 }}
-                className="group"
-                style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 10px", borderRadius: 10, cursor: "pointer", transition: "background 0.12s", background: "transparent" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "var(--clr-card)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
+                initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.30 + i * 0.06 }}
+                style={{
+                  display: "flex", alignItems: "flex-start", gap: 10,
+                  padding: "9px 8px", borderRadius: 9, cursor: "pointer", transition: "background 0.12s",
+                }}
+                whileHover={{ backgroundColor: "var(--clr-card-hover)" }}
               >
-                <AlertCircle
-                  style={{ width: 13, height: 13, marginTop: 2, flexShrink: 0, color: item.type === "danger" ? clr.danger : item.type === "warning" ? clr.warning : clr.text4 }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: clr.text2 }}>{item.label}</div>
-                  <div style={{ fontSize: 11, color: clr.text4, marginTop: 2 }}>{item.detail}</div>
+                <div style={{
+                  width: 20, height: 20, borderRadius: 6, flexShrink: 0, marginTop: 1,
+                  background: `${item.color}10`, border: `1px solid ${item.color}28`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <AlertCircle style={{ width: 10, height: 10, color: item.color }} />
                 </div>
-                <Button variant="ghost" size="xs" style={{ opacity: 0.6, fontSize: 11, color: "#a78bfa", flexShrink: 0 }}
-                  onClick={() => {
-                    const toasts: Record<string, string> = {
-                      "Recover": "Opening Meridian Group recovery plan…",
-                      "Remind": "Sending overdue invoice reminder to Apex Digital…",
-                      "Follow up": "Drafting personalised follow-up for Alex Thompson…",
-                      "Generate": "Generating status reports for 3 clients…",
-                    };
-                    showToast(toasts[item.action] || `${item.action} — processing…`, "info");
-                  }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--clr-text2)" }}>{item.label}</div>
+                  <div style={{ fontSize: 10.5, color: "var(--clr-text4)", marginTop: 2 }}>{item.detail}</div>
+                </div>
+                <button
+                  style={{
+                    fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 7,
+                    background: "rgba(0,212,255,0.06)", border: "1px solid rgba(0,212,255,0.14)",
+                    color: "#00d4ff", cursor: "pointer", flexShrink: 0, transition: "all 0.12s",
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,212,255,0.12)";
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 8px rgba(0,212,255,0.12)";
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,212,255,0.06)";
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = "none";
+                  }}
+                  onClick={() => showToast(`${item.action} — processing…`, "info")}
+                >
                   {item.action}
-                </Button>
+                </button>
               </motion.div>
             ))}
           </div>

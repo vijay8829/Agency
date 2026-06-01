@@ -14,36 +14,42 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<Variant, string> = {
+  /* Electric cyan — primary CTA */
   primary:
-    "bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white border border-violet-500/40 " +
-    "shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_0_24px_rgba(124,58,237,0.18)] " +
-    "hover:shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_0_32px_rgba(124,58,237,0.28)]",
+    "bg-gradient-to-r from-[#00d4ff] to-[#06b6d4] hover:from-[#33ddff] hover:to-[#22c8e8] " +
+    "active:from-[#00b8e0] active:to-[#0599bc] text-[#020510] font-semibold border border-[#00d4ff]/40 " +
+    "shadow-[0_0_20px_rgba(0,212,255,0.22),0_1px_0_rgba(255,255,255,0.15)_inset] " +
+    "hover:shadow-[0_0_32px_rgba(0,212,255,0.35),0_1px_0_rgba(255,255,255,0.15)_inset]",
+  /* Subtle glass — secondary */
   secondary:
-    "bg-white/[0.05] hover:bg-white/[0.09] active:bg-white/[0.04] " +
-    "text-zinc-200 border border-white/[0.08] hover:border-white/[0.16]",
+    "bg-[rgba(0,212,255,0.05)] hover:bg-[rgba(0,212,255,0.09)] active:bg-[rgba(0,212,255,0.04)] " +
+    "text-zinc-200 border border-[rgba(0,212,255,0.12)] hover:border-[rgba(0,212,255,0.22)]",
+  /* Ghost / minimal */
   ghost:
-    "bg-transparent hover:bg-white/[0.06] active:bg-white/[0.04] " +
-    "text-zinc-400 hover:text-zinc-200 border border-transparent",
+    "bg-transparent hover:bg-[rgba(0,212,255,0.06)] active:bg-[rgba(0,212,255,0.04)] " +
+    "text-zinc-400 hover:text-zinc-200 border border-transparent hover:border-[rgba(0,212,255,0.10)]",
+  /* Danger — hot pink */
   danger:
-    "bg-red-500/[0.08] hover:bg-red-500/[0.16] active:bg-red-500/[0.06] " +
-    "text-red-400 border border-red-500/20 hover:border-red-500/35",
+    "bg-[rgba(255,51,102,0.08)] hover:bg-[rgba(255,51,102,0.16)] active:bg-[rgba(255,51,102,0.06)] " +
+    "text-[#ff7099] border border-[rgba(255,51,102,0.20)] hover:border-[rgba(255,51,102,0.35)]",
+  /* Outline */
   outline:
-    "bg-transparent hover:bg-white/[0.04] " +
-    "text-zinc-300 border border-white/[0.1] hover:border-white/[0.2]",
+    "bg-transparent hover:bg-[rgba(0,212,255,0.04)] " +
+    "text-zinc-300 border border-[rgba(0,212,255,0.14)] hover:border-[rgba(0,212,255,0.28)]",
+  /* Success — neon mint */
   success:
-    "bg-emerald-500/[0.1] hover:bg-emerald-500/[0.18] active:bg-emerald-500/[0.07] " +
-    "text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/35",
-  // AI actions — gradient, premium glow
+    "bg-[rgba(0,255,157,0.08)] hover:bg-[rgba(0,255,157,0.16)] active:bg-[rgba(0,255,157,0.06)] " +
+    "text-[#00ff9d] border border-[rgba(0,255,157,0.20)] hover:border-[rgba(0,255,157,0.35)]",
+  /* AI — violet gradient, deep glow */
   ai:
-    "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 " +
-    "active:from-violet-700 active:to-indigo-700 text-white border border-violet-500/30 " +
-    "shadow-[0_0_24px_rgba(124,58,237,0.22)] hover:shadow-[0_0_36px_rgba(124,58,237,0.35)]",
-  // Billing / payment actions — green CTA
+    "bg-gradient-to-r from-[#8b5cf6] to-[#6d28d9] hover:from-[#9d72ff] hover:to-[#7c3aed] " +
+    "active:from-[#7c4fe0] active:to-[#5b21b6] text-white border border-[rgba(139,92,246,0.35)] " +
+    "shadow-[0_0_24px_rgba(139,92,246,0.25)] hover:shadow-[0_0_36px_rgba(139,92,246,0.38)]",
+  /* Billing — neon green CTA */
   billing:
-    "bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 " +
-    "text-white border border-emerald-500/40 " +
-    "shadow-[0_1px_0_rgba(255,255,255,0.1)_inset,0_0_20px_rgba(16,185,129,0.14)] " +
-    "hover:shadow-[0_1px_0_rgba(255,255,255,0.1)_inset,0_0_28px_rgba(16,185,129,0.24)]",
+    "bg-[#00ff9d] hover:bg-[#33ffb0] active:bg-[#00e88d] " +
+    "text-[#020510] font-semibold border border-[rgba(0,255,157,0.5)] " +
+    "shadow-[0_0_20px_rgba(0,255,157,0.22)] hover:shadow-[0_0_32px_rgba(0,255,157,0.35)]",
 };
 
 const sizes: Record<Size, string> = {
