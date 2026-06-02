@@ -249,9 +249,9 @@ export function Dashboard() {
           borderRadius: 20, padding: "26px 26px 20px",
           marginBottom: 22,
           position: "relative", overflow: "hidden",
-          background: "rgba(0,212,255,0.03)",
-          border: "1px solid rgba(0,212,255,0.16)",
-          boxShadow: "0 0 40px rgba(0,212,255,0.04), inset 0 1px 0 rgba(0,212,255,0.06)",
+          background: "var(--clr-card)",
+          border: "1px solid var(--clr-border)",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
         }}
       >
         {/* Neural canvas background */}
@@ -293,8 +293,8 @@ export function Dashboard() {
               display: "flex", alignItems: "center", gap: 6,
               fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 9,
               cursor: "pointer", transition: "all 0.15s", flexShrink: 0,
-              background: simMode ? "rgba(245,166,35,0.10)" : "rgba(0,212,255,0.05)",
-              border: `1px solid ${simMode ? "rgba(245,166,35,0.28)" : "rgba(0,212,255,0.14)"}`,
+              background: simMode ? "rgba(245,166,35,0.10)" : "var(--clr-card-hover)",
+              border: `1px solid ${simMode ? "rgba(245,166,35,0.28)" : "var(--clr-border)"}`,
               color: simMode ? "#f5a623" : "var(--clr-text4)",
             }}
           >
@@ -317,18 +317,18 @@ export function Dashboard() {
             width: "100%", fontSize: 13.5, color: "var(--clr-text1)",
             resize: "none", outline: "none", fontFamily: "inherit",
             fontWeight: 450, lineHeight: 1.65,
-            background: "rgba(0,212,255,0.03)",
-            border: "1px solid rgba(0,212,255,0.12)",
+            background: "var(--clr-input-bg)",
+            border: "1px solid var(--clr-input-border)",
             borderRadius: 13, padding: "13px 15px",
             transition: "border-color 0.2s, box-shadow 0.2s",
             boxSizing: "border-box", position: "relative",
           }}
           onFocus={e => {
-            e.target.style.borderColor = "rgba(0,212,255,0.38)";
-            e.target.style.boxShadow = "0 0 0 3px rgba(0,212,255,0.07), 0 0 20px rgba(0,212,255,0.08)";
+            e.target.style.borderColor = "var(--clr-border-hover)";
+            e.target.style.boxShadow = "0 0 0 3px rgba(0,212,255,0.07)";
           }}
           onBlur={e => {
-            e.target.style.borderColor = "rgba(0,212,255,0.12)";
+            e.target.style.borderColor = "var(--clr-input-border)";
             e.target.style.boxShadow = "none";
           }}
         />
@@ -340,21 +340,19 @@ export function Dashboard() {
               <button key={i} onClick={() => { setPrompt(s); textareaRef.current?.focus(); }}
                 style={{
                   fontSize: 11, color: "var(--clr-text4)",
-                  background: "rgba(0,212,255,0.04)", border: "1px solid rgba(0,212,255,0.10)",
+                  background: "var(--clr-card)", border: "1px solid var(--clr-border)",
                   borderRadius: 20, padding: "4px 11px", cursor: "pointer",
                   transition: "all 0.14s", fontFamily: "inherit",
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.background = "rgba(0,212,255,0.10)";
-                  e.currentTarget.style.borderColor = "rgba(0,212,255,0.28)";
+                  e.currentTarget.style.background = "var(--clr-card-hover)";
+                  e.currentTarget.style.borderColor = "var(--clr-border-hover)";
                   e.currentTarget.style.color = "#00d4ff";
-                  e.currentTarget.style.boxShadow = "0 0 8px rgba(0,212,255,0.10)";
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.background = "rgba(0,212,255,0.04)";
-                  e.currentTarget.style.borderColor = "rgba(0,212,255,0.10)";
+                  e.currentTarget.style.background = "var(--clr-card)";
+                  e.currentTarget.style.borderColor = "var(--clr-border)";
                   e.currentTarget.style.color = "var(--clr-text4)";
-                  e.currentTarget.style.boxShadow = "none";
                 }}
               >{s}</button>
             ))}
@@ -401,8 +399,8 @@ export function Dashboard() {
               style={{ marginTop: 14, overflow: "hidden" }}
             >
               <div style={{
-                background: "rgba(0,212,255,0.03)",
-                border: "1px solid rgba(0,212,255,0.18)",
+                background: "var(--clr-card)",
+                border: "1px solid var(--clr-border)",
                 borderRadius: 14, padding: "16px 18px",
                 position: "relative", overflow: "hidden",
               }}>
@@ -411,9 +409,8 @@ export function Dashboard() {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <div style={{ width: 22, height: 22, borderRadius: 7,
-                      background: "rgba(0,212,255,0.14)", border: "1px solid rgba(0,212,255,0.25)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: "0 0 8px rgba(0,212,255,0.20)" }}>
+                      background: "var(--clr-card-hover)", border: "1px solid var(--clr-border-hover)",
+                      display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <Bot style={{ width: 11, height: 11, color: "#00d4ff" }} />
                     </div>
                     <span style={{ fontSize: 12, fontWeight: 700, color: "#00d4ff", letterSpacing: "0.02em" }}>
@@ -443,7 +440,7 @@ export function Dashboard() {
                   ))}
                 </div>
                 {!simMode && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(0,212,255,0.08)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--clr-border)" }}>
                     <button
                       onClick={handleConfirm}
                       style={{

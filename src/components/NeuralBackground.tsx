@@ -13,7 +13,7 @@ export function NeuralBackground({ className = "" }: { className?: string }) {
     if (!ctx) return;
 
     let raf: number;
-    const N = 55;
+    const N = 48;
     const particles: Particle[] = [];
 
     const resize = () => {
@@ -26,14 +26,21 @@ export function NeuralBackground({ className = "" }: { className?: string }) {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.28,
-        vy: (Math.random() - 0.5) * 0.28,
-        r: Math.random() * 1.8 + 0.6,
-        a: Math.random(),
+        vx: (Math.random() - 0.5) * 0.26,
+        vy: (Math.random() - 0.5) * 0.26,
+        r: Math.random() * 1.6 + 0.5,
+        a: Math.random() * Math.PI * 2,
       });
     }
 
     const draw = () => {
+      const isLight = document.documentElement.getAttribute("data-theme") === "light";
+      /* In light mode: subtle navy-blue particles on white; dark mode: cyan particles */
+      const cR = isLight ? 0   : 0;
+      const cG = isLight ? 100 : 212;
+      const cB = isLight ? 180 : 255;
+      const baseOpacity = isLight ? 0.18 : 0.45;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       /* connections */
@@ -42,11 +49,11 @@ export function NeuralBackground({ className = "" }: { className?: string }) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 120) {
-            const alpha = (1 - dist / 120) * 0.18;
+          if (dist < 110) {
+            const alpha = (1 - dist / 110) * (isLight ? 0.10 : 0.18);
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(0,212,255,${alpha})`;
-            ctx.lineWidth = 0.6;
+            ctx.strokeStyle = `rgba(${cR},${cG},${cB},${alpha})`;
+            ctx.lineWidth = 0.5;
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
             ctx.stroke();
@@ -56,25 +63,22 @@ export function NeuralBackground({ className = "" }: { className?: string }) {
 
       /* nodes */
       particles.forEach(p => {
-        p.a += 0.015;
-        const pulse = 0.4 + Math.sin(p.a) * 0.3;
+        p.a += 0.012;
+        const pulse = 0.4 + Math.sin(p.a) * 0.28;
 
-        /* glow */
         const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
-        grd.addColorStop(0, `rgba(0,212,255,${pulse * 0.5})`);
+        grd.addColorStop(0, `rgba(${cR},${cG},${cB},${pulse * 0.4})`);
         grd.addColorStop(1, "transparent");
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2);
         ctx.fillStyle = grd;
         ctx.fill();
 
-        /* core */
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0,212,255,${pulse})`;
+        ctx.fillStyle = `rgba(${cR},${cG},${cB},${pulse * 0.85})`;
         ctx.fill();
 
-        /* move */
         p.x += p.vx;
         p.y += p.vy;
         if (p.x < 0 || p.x > canvas.width)  p.vx *= -1;
@@ -98,7 +102,7 @@ export function NeuralBackground({ className = "" }: { className?: string }) {
     <canvas
       ref={canvasRef}
       className={className}
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.45, pointerEvents: "none" }}
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.5, pointerEvents: "none" }}
     />
   );
 }

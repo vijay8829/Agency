@@ -54,7 +54,10 @@ export function Header({ activeModule, onNavigate, onMenuClick }: HeaderProps) {
   const [showNotifs, setShowNotifs]   = useState(false);
   const [showNew, setShowNew]         = useState(false);
   const [tick, setTick]               = useState(0);
-  const [theme, setTheme]             = useState<ThemeMode>("dark");
+  /* Lazy init so toggle icon is correct on first render without a useEffect sync */
+  const [theme, setTheme] = useState<ThemeMode>(() =>
+    typeof window === "undefined" ? "dark" : getSavedTheme()
+  );
   const searchInputRef = useRef<HTMLInputElement>(null);
   const notifsRef      = useRef<HTMLDivElement>(null);
   const newRef         = useRef<HTMLDivElement>(null);
@@ -64,9 +67,6 @@ export function Header({ activeModule, onNavigate, onMenuClick }: HeaderProps) {
     const id = setInterval(() => setTick(t => t + 1), 1000);
     return () => clearInterval(id);
   }, []);
-
-  /* Sync theme state from localStorage on mount */
-  useEffect(() => { setTheme(getSavedTheme()); }, []);
 
   const toggleTheme = () => {
     const next: ThemeMode = theme === "dark" ? "light" : "dark";
