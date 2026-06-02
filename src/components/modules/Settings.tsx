@@ -16,7 +16,7 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
       style={{
         width: 40, height: 22, borderRadius: 11, position: "relative", cursor: "pointer", flexShrink: 0,
         background: enabled ? clr.accent : "var(--clr-card-hover)",
-        border: `1px solid ${enabled ? "rgba(124,58,237,0.4)" : clr.border}`,
+        border: `1px solid ${enabled ? "rgba(0,212,255,0.35)" : clr.border}`,
         transition: "all 0.2s ease",
       }}
     >
@@ -154,7 +154,7 @@ export function Settings() {
                 <button key={v} onClick={() => setAiStyle(v)}
                   style={{ padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 0.15s",
                     background: v === aiStyle ? clr.accent : "var(--clr-card)",
-                    border: `1px solid ${v === aiStyle ? "rgba(124,58,237,0.5)" : clr.border}`,
+                    border: `1px solid ${v === aiStyle ? "rgba(0,212,255,0.40)" : clr.border}`,
                     color: v === aiStyle ? "white" : clr.text3 }}>
                   {v}
                 </button>
@@ -168,7 +168,7 @@ export function Settings() {
                 <button key={v} onClick={() => setAiModel(v)}
                   style={{ padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all 0.15s",
                     background: v === aiModel ? clr.accent : "var(--clr-card)",
-                    border: `1px solid ${v === aiModel ? "rgba(124,58,237,0.5)" : clr.border}`,
+                    border: `1px solid ${v === aiModel ? "rgba(0,212,255,0.40)" : clr.border}`,
                     color: v === aiModel ? "white" : clr.text3 }}>
                   {v}
                 </button>
@@ -211,7 +211,7 @@ export function Settings() {
                       flex: 1,
                       display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
                       padding: "14px 10px", borderRadius: 12, cursor: "pointer", transition: "all 0.18s",
-                      background: active ? "rgba(124,58,237,0.12)" : "var(--clr-card)",
+                      background: active ? "rgba(0,212,255,0.12)" : "var(--clr-card)",
                       border: `1px solid ${active ? "rgba(124,58,237,0.45)" : clr.border}`,
                       outline: "none",
                     }}
@@ -235,7 +235,7 @@ export function Settings() {
               })}
             </div>
           </div>
-          <div style={{ background: "rgba(124,58,237,0.04)", border: "1px solid rgba(124,58,237,0.12)", borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ background: "rgba(0,212,255,0.04)", border: "1px solid rgba(0,212,255,0.12)", borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: clr.accent, flexShrink: 0 }} />
             <span style={{ fontSize: 12, color: clr.text3 }}>
               {themeMode === "system"

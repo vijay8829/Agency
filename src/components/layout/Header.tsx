@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Bell, Search, Plus, Bot, FileText, Users, Zap, Menu, UserPlus, PenLine, Cpu } from "lucide-react";
+import { Bell, Search, Plus, Bot, FileText, Users, Zap, Menu, UserPlus, PenLine, Cpu, Sun, Moon } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { leads, clients, recentActivity } from "@/lib/data";
+import { applyTheme, getSavedTheme, type ThemeMode } from "@/lib/theme";
 
 const moduleLabels: Record<string, { label: string; description: string }> = {
   dashboard:     { label: "Dashboard",      description: "Overview & AI command"      },
@@ -53,6 +54,7 @@ export function Header({ activeModule, onNavigate, onMenuClick }: HeaderProps) {
   const [showNotifs, setShowNotifs]   = useState(false);
   const [showNew, setShowNew]         = useState(false);
   const [tick, setTick]               = useState(0);
+  const [theme, setTheme]             = useState<ThemeMode>("dark");
   const searchInputRef = useRef<HTMLInputElement>(null);
   const notifsRef      = useRef<HTMLDivElement>(null);
   const newRef         = useRef<HTMLDivElement>(null);
@@ -62,6 +64,15 @@ export function Header({ activeModule, onNavigate, onMenuClick }: HeaderProps) {
     const id = setInterval(() => setTick(t => t + 1), 1000);
     return () => clearInterval(id);
   }, []);
+
+  /* Sync theme state from localStorage on mount */
+  useEffect(() => { setTheme(getSavedTheme()); }, []);
+
+  const toggleTheme = () => {
+    const next: ThemeMode = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    applyTheme(next);
+  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -158,14 +169,38 @@ export function Header({ activeModule, onNavigate, onMenuClick }: HeaderProps) {
 
         {/* Right — AI clock + actions */}
         <div className="flex items-center gap-1.5">
-          {/* AI system clock — hidden on mobile */}
-          <div className="hidden lg:flex items-center gap-1.5 mr-1"
+          {/* AI system clock — hidden on small screens */}
+          <div className="hidden md:flex items-center gap-1.5 mr-1"
             style={{ padding: "3px 9px", borderRadius: 7, background: "rgba(0,212,255,0.04)", border: "1px solid rgba(0,212,255,0.08)" }}>
             <Cpu style={{ width: 9, height: 9, color: "#00d4ff", opacity: 0.7 }} />
             <span style={{ fontSize: 10, color: "var(--clr-text4)", fontFamily: "'SF Mono', 'Fira Code', monospace", letterSpacing: "0.05em" }}>
               {timeStr}
             </span>
           </div>
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200"
+            style={{
+              background: "var(--clr-card)",
+              border: "1px solid var(--clr-border)",
+              color: theme === "dark" ? "#f5a623" : "#00d4ff",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "rgba(0,212,255,0.08)";
+              e.currentTarget.style.borderColor = "rgba(0,212,255,0.22)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "var(--clr-card)";
+              e.currentTarget.style.borderColor = "var(--clr-border)";
+            }}
+          >
+            {theme === "dark"
+              ? <Sun className="w-3.5 h-3.5" />
+              : <Moon className="w-3.5 h-3.5" />}
+          </button>
 
           {/* Search */}
           <button

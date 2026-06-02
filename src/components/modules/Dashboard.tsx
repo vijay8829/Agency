@@ -196,7 +196,7 @@ export function Dashboard() {
   ];
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1080, margin: "0 auto" }}>
+    <div className="shell-pad" style={{ maxWidth: 1080, margin: "0 auto" }}>
 
       {/* ── Greeting bar ─────────────────────────────────── */}
       <motion.div
@@ -237,8 +237,7 @@ export function Dashboard() {
       </motion.div>
 
       {/* ── Metric cards ─────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}
-        className="grid-cols-4">
+      <div className="metric-grid" style={{ marginBottom: 24 }}>
         {metricCards.map(m => <MetricCard key={m.label} {...m} />)}
       </div>
 
